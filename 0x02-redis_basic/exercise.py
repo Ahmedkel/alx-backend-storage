@@ -27,7 +27,7 @@ def call_history(method: Callable) -> Callable:
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """wrapper method for redis"""
-        self._redis.rpush(inputs, str(args))
+        self._redis.rpush(inputs, ','.join(map(str, args)))
         result = method(self, *args, **kwargs)
         self._redis.rpush(outputs, str(result))
         return result
@@ -46,8 +46,9 @@ def replay(redis_instance: redis.Redis, method: Callable) -> List[str]:
 
     print(f"{method_name} was called {len(input_history)} times:")
     for input_data, output_data in zip(input_history, output_history):
+        input_tuple = tuple(input_data.decode('utf-8').split(','))
         print(
-            f"{method_name}(*{input_data.decode('utf-8')}) -> {output_data.decode('utf-8')}")
+            f"{method_name}(*{input_tuple}) -> {output_data.decode('utf-8')}")
 
 
 class Cache:
