@@ -2,7 +2,7 @@
 """this is module for redis"""
 from functools import wraps
 import redis
-from typing import Union, Callable
+from typing import Union, Callable, Optional, List
 import uuid
 
 
@@ -17,6 +17,35 @@ def count_calls(method: Callable) -> Callable:
         return method(self, *args, **kwargs)
     return wrapper
 
+def call_history(method: Callable) -> Callable:
+    """call history method for redis"""
+    key = method.__qualname__
+    inputs = key + ":inputs"
+    outputs = key + ":outputs"
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        """wrapper method for redis"""
+        self._redis.rpush(inputs, str(args))
+        result = method(self, *args, **kwargs)
+        self._redis.rpush(outputs, str(result))
+        return result
+    return wrapper
+
+def replay(redis_instance: redis.Redis, method: Callable) -> List[str]:
+    """replay method for redis"""
+    method_name = method.__qualname__
+
+    input_key = method_name + ":inputs"
+    output_key = method_name + ":outputs"
+
+    input_history = redis_instance.lrange(input_key, 0, -1)
+    output_history = redis_instance.lrange(output_key, 0, -1)
+
+    print(f"{method_name} was called {len(input_history)} times:")
+    for input_data, output_data in zip(input_history, output_history):
+        print(
+            f"{method_name}(*{input_data.decode('utf-8')}) -> {output_data.decode('utf-8')}")
 
 class Cache:
     """main class for redis"""
