@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """this is module for redis"""
+from functools import wraps
 import redis
 from typing import Union, Callable
 import uuid
@@ -12,6 +13,19 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @staticmethod
+    def count_calls(func: Callable) -> Callable:
+        """count calls method for redis"""
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            """wrapper method for redis"""
+            key = func.__qualname__
+            count = self._redis.incr(key)
+            self._redis.set(key, count)
+            return func(self, *args, **kwargs)
+        return wrapper
+    
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """sotre method for redis"""
         key = str(uuid.uuid4())
