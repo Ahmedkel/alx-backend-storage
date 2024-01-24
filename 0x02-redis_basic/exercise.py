@@ -17,6 +17,7 @@ def count_calls(method: Callable) -> Callable:
         return method(self, *args, **kwargs)
     return wrapper
 
+
 def call_history(method: Callable) -> Callable:
     """call history method for redis"""
     key = method.__qualname__
@@ -31,6 +32,7 @@ def call_history(method: Callable) -> Callable:
         self._redis.rpush(outputs, str(result))
         return result
     return wrapper
+
 
 def replay(redis_instance: redis.Redis, method: Callable) -> List[str]:
     """replay method for redis"""
@@ -47,13 +49,14 @@ def replay(redis_instance: redis.Redis, method: Callable) -> List[str]:
         print(
             f"{method_name}(*{input_data.decode('utf-8')}) -> {output_data.decode('utf-8')}")
 
+
 class Cache:
     """main class for redis"""
     def __init__(self):
         """init method for redis"""
         self._redis = redis.Redis()
         self._redis.flushdb()
-    
+
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """sotre method for redis"""
@@ -67,7 +70,7 @@ class Cache:
         elif isinstance(data, float):
             self._redis.set(key, str(data))
         return key
-    
+
     def get(self, key: str, fn: Callable = None) -> Union[str, bytes, int, float]:
         """get method for redis"""
         value = self._redis.get(key)
