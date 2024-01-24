@@ -72,7 +72,7 @@ class Cache:
             self._redis.set(key, str(data))
         return key
 
-    def get(self, key: str, fn: Callable = None) -> \
+    def get(self, key: str, fn: Optional[Callable] = None) -> \
             Union[str, bytes, int, float]:
         """get method for redis"""
         value = self._redis.get(key)
