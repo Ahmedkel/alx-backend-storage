@@ -15,6 +15,7 @@ def count_calls(method: Callable) -> Callable:
         key = method.__qualname__
         self._redis.incr(key)
         return method(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -60,33 +61,29 @@ class Cache:
     @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        """sotre method for redis"""
+        """store method for redis"""
         key = str(uuid.uuid4())
-        if isinstance(data, str):
-            self._redis.set(key, data)
-        elif isinstance(data, bytes):
-            self._redis.set(key, data)
-        elif isinstance(data, int):
-            self._redis.set(key, str(data))
-        elif isinstance(data, float):
-            self._redis.set(key, str(data))
+        self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable] = None) -> \
-            Union[str, bytes, int, float]:
+    def get(self, key: str,
+            fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
         """get method for redis"""
-        value = self._redis.get(key)
-        if value is None:
-            return None
-        if fn is not None:
-            return fn(value)
-        else:
-            return value
+        data = self._redis.get(key)
+        if fn:
+            return fn(data)
+        return data
 
     def get_str(self, key: str) -> str:
         """get str method for redis"""
-        return self.get(key, lambda d: d.decode("utf-8"))
+        data = self._redis.get(key)
+        return data.decode("utf-8")
 
     def get_int(self, key: str) -> int:
         """get int method for redis"""
-        return self.get(key, int)
+        value = self._redis.get(key)
+        try:
+            value = int(value.decode("utf-8"))
+        except Exception:
+            value = 0
+        return value
