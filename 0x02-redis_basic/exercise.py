@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """this is module for redis"""
 import redis
-from typing import Union
+from typing import Union, Callable
 import uuid
 
 
@@ -24,3 +24,21 @@ class Cache:
         elif isinstance(data, float):
             self._redis.set(key, str(data))
         return key
+    
+    def get(self, key: str, fn: Callable = None) -> Union[str, bytes, int, float]:
+        """get method for redis"""
+        value = self._redis.get(key)
+        if value is None:
+            return None
+        if fn is not None:
+            return fn(value)
+        else:
+            return value
+
+    def get_str(self, key: str) -> str:
+        """get str method for redis"""
+        return self.get(key, lambda d: d.decode("utf-8"))
+
+    def get_int(self, key: str) -> int:
+        """get int method for redis"""
+        return self.get(key, int)
