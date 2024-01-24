@@ -5,6 +5,7 @@ import redis
 from typing import Union, Callable
 import uuid
 
+
 def count_calls(method: Callable) -> Callable:
     """count calls method for redis"""
 
